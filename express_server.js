@@ -16,7 +16,7 @@ function generateRandomString(length) {
   return result;
 }
 
-const urlDatabase = {
+let urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
@@ -51,22 +51,30 @@ app.get('/urls/:shortURL', (req, res) => {
 });
 
 app.get('/u/:shortUrl', (req, res) => {
-  let longUrl = urlDatabase[req.params.shortUrl]
+  const longUrl = urlDatabase[req.params.shortUrl]
   if (!doesUrlHaveHttp(longUrl)) {
     res.redirect(`http://${longUrl}`)
   } 
   res.redirect(longUrl);
 })
 
+app.post('/urls/:shortUrl/delete', (req, res) => {
+  let shortUrl = req.params.shortUrl;
+  console.log(shortUrl)
+  delete urlDatabase[shortUrl];
+  res.redirect('/urls');
+});
+
 const doesUrlHaveHttp = (url) => {
   return url.startsWith('http');
 }
 
-// `http://${req.params.shortUrl}`
 // localhost:8080/u/b2xVn2
 // localhost:8080/
 // localhost:8080/urls
 // localhost:8080/urls/new
+
+// <------- Listening -------->
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
