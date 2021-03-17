@@ -21,65 +21,77 @@ const urlDatabase = {
 
 //-------------- ROUTING --------------//
 
+
 app.get('/', (req, res) => {
-  res.send('Hello');
+  res.send('I AM ROOT');
 });
 
+// user login
 app.post('/login', (req, res) => {
   userNameStr = req.body["userName"];
   res.cookie('username', userNameStr);
   res.redirect('/urls')
 });
 
+// user logout
 app.post('/logout', (req, res) => {
-  // clear the cookies
   res.clearCookie('username');
-  // redirect to //urls
   res.redirect('/urls')
 });
 
+// send page with URL index
 app.get('/urls', (req, res) => {
   const usernameCookie = req.cookies["username"];
   const templateVars = { urls: urlDatabase, username: usernameCookie}
   res.render('urls_index', templateVars);
 });
 
+// send page with new URL form
 app.get('/urls/new', (req, res) => { 
   const usernameCookie = req.cookies["username"];
   const templateVars = {username: usernameCookie}
   res.render("urls_new", templateVars);
 });
 
+// generate new short URL and store long URL
 app.post("/urls", (req, res) => {
   // console.log(req.body);  // Log the POST request body to the console
   let newKey = generateRandomString(6); 
   inputUrl = req.body.longURL;
-  let httpUrl = returnUrlWithHttp(inputUrl);
-  urlDatabase[newKey] = httpUrl;
-  const usernameCookie = req.cookies["username"];
-  const templateVars = {username: usernameCookie}
-  res.redirect(`/urls/${newKey}`, templateVars); 
-
+  let httpURL = returnUrlWithHttp(inputUrl);  
+  urlDatabase[newKey] = httpURL;
+  res.redirect(`/urls/${newKey}`); 
 });
 
 // our URLs show page display 
 app.get('/urls/:shortURL', (req, res) => { 
-  const shortUrl = req.params.shortURL;
-  const longUrl = urlDatabase[req.params.shortURL];
+  const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[shortURL];
   const usernameCookie = req.cookies["username"];
-  const templateVars = { shortURL: shortUrl, longURL: longUrl, username: usernameCookie};
+  const templateVars = { shortURL: shortURL, longURL: longURL, username: usernameCookie};
   res.render("urls_show", templateVars);
 });
 
 // when we enter a new URL
-app.get('/u/:shortUrl', (req, res) => {
-  const longUrl = urlDatabase[req.params.shortUrl]
-  return res.redirect(!returnUrlWithHttp(longUrl))
-})
+app.get('/urls/:shortURL', (req, res) => {
+  // const shortURL = 
+  const longURL = urlDatabase[req.params.shortURL];
+  return res.redirect(!returnUrlWithHttp(longURL));
+});
 
-app.post('/urls/:shortUrl/delete', (req, res) => {
-  let shortUrl = req.params.shortUrl;
-  delete urlDatabase[shortUrl];
+// edit an URL
+app.post('/urls/:id', (req, res) => {
+  const shortURL = req.params.id;
+  const inputURL = req.body.longURL;
+  const longURL = returnUrlWithHttp(inputURL)
+  urlDatabase[shortURL] = longURL;
+  res.redirect('/urls');
+});
+
+// delete an URL
+app.post('/urls/:shortURL/delete', (req, res) => {
+  let shortURL = req.params.shortURL;
+  delete urlDatabase[shortURL];
   res.redirect('/urls');
 });
 
@@ -91,14 +103,36 @@ app.post('/urls/:shortUrl/delete', (req, res) => {
 
 // <------------ Helper Functions --------------->
 
+// returns string with http:// prefix
 const returnUrlWithHttp = (url) => {
   if ((!url.startsWith('http')) && (!url.startsWith('https'))) {
-    return `http:/${url}`;
+    return `http://${url}`;
   } else {
     return url;
   }
-}
+};
 
+// adds .com to URL
+const addDotCom = (url) => {
+  const lastFour = url.slice(-4);
+  const dotCom = '.com'
+  if (lastFour === dotCom) {
+    return url;
+  } else {
+    return `${url}.com`;
+  }
+};
+
+// do we have this URL in our db?
+const doesURLExist = (url) => {
+  let urlArr = Object.values(urlDatabase);
+  for (const value of urlArr) {
+    if (url === value) {
+      return true;
+    }
+  }
+};
+   
 function generateRandomString(length) {
   const chars = '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   var result = '';
