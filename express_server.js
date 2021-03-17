@@ -55,10 +55,13 @@ app.get('/urls/new', (req, res) => {
 
 // generate new short URL and store long URL
 app.post("/urls", (req, res) => {
-  // console.log(req.body);  // Log the POST request body to the console
-  let newKey = generateRandomString(6); 
   inputUrl = req.body.longURL;
-  let httpURL = returnUrlWithHttp(inputUrl);  
+  let httpURL = addDotCom(returnUrlWithHttp(inputUrl));  
+  if (!doesURLExist(httpURL)) {
+    console.log('this entry exists'); // how do I alert??
+    res.redirect('/urls/new');
+  }
+  let newKey = generateRandomString(6); 
   urlDatabase[newKey] = httpURL;
   res.redirect(`/urls/${newKey}`); 
 });
@@ -83,7 +86,7 @@ app.get('/urls/:shortURL', (req, res) => {
 app.post('/urls/:id', (req, res) => {
   const shortURL = req.params.id;
   const inputURL = req.body.longURL;
-  const longURL = returnUrlWithHttp(inputURL)
+  const longURL = addDotCom(returnUrlWithHttp(inputURL));
   urlDatabase[shortURL] = longURL;
   res.redirect('/urls');
 });
@@ -114,14 +117,15 @@ const returnUrlWithHttp = (url) => {
 
 // adds .com to URL
 const addDotCom = (url) => {
-  const lastFour = url.slice(-4);
-  const dotCom = '.com'
-  if (lastFour === dotCom) {
-    return url;
-  } else {
-    return `${url}.com`;
+  const domExtArray = ['.com', '.ca', '.co.uk', '.net', '.org', '.us'];
+  for (const domExt of domExtArray) {
+    if (domExt === url.slice(-domExt.length)) {
+      return url
+    }
   }
-};
+  return `${url}.com`
+}
+
 
 // do we have this URL in our db?
 const doesURLExist = (url) => {
