@@ -135,6 +135,10 @@ app.get('/urls', (req, res) => {
 // ADD NEW URL PAGE
 app.get('/urls/new', (req, res) => {
   const userIdCookie = req.cookies["user_id"];
+  if (!userIdCookie) {
+    res.redirect('/login');
+    return;
+  }
   const userObject = userDatabase[userIdCookie];
   const templateVars = { "userObject": userObject };
   res.render("urls_new", templateVars);
