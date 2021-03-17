@@ -47,10 +47,7 @@ app.get('/', (req, res) => {
   res.send('I AM ROOT');
 });
 
-// register new user from form input
-// TODO - convert all string to either upper or lowercase
-// HAVENT CREATED REGISTER PAGE YET 
-// NO USERS IN DB YET 
+// USER REGISTRATION 
 app.post('/register', (req, res) => {
   const email = req.body.email.toLowerCase();
   const username = req.body.username;
@@ -69,21 +66,30 @@ app.post('/register', (req, res) => {
   res.redirect('/urls');
 });
 
-// login from login page
+// LOGIN FROM LOGIN
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   if (doesUserExist(email)) {
     if (isPasswordCorrect(email, password)) {
-      let userNameStr = getUserInfo(email, 'email', 'username');
-      console.log(userNameStr);
-      res.cookie('username', userNameStr);
+      let userId = getUserInfo(email, 'email', 'userid');
+      res.cookie('user_id', userId);
       res.redirect('/urls');
+      return;
+    } else {
+      error = "Password/username is incorrect"
+      res.status(401).send(error);
+      return
     }
+    // NEED TO EXPAND TO LINK TO REGISTRY
+  } else {
+    error = "User doesn't exist"
+      res.status(401).send(error);
+      return
   }
 });
 
-// ** LOGIN FROM HEADER **
+// ** OLD LOGIN FROM HEADER **
 // user login 
 // sets cookie with username
 // app.post('/login', (req, res) => {
@@ -92,56 +98,63 @@ app.post('/login', (req, res) => {
 //   res.redirect('/urls');
 // });
 
-// user logout
+// USER LOGOUT
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
 // MAIN PAGES //
 
+// LOGIN
+// currently, we are logging out automatically when we go to the login page//
+// 
 app.get('/login', (req, res) => {
-  const usernameCookie = req.cookies["username"];
-  const templateVars = {username: usernameCookie};
+  const userIdCookie = req.cookies["user_id"];
+  const userObject = userDatabase[userIdCookie];
+  const templateVars = { "userObject": userObject };
   res.render('urls_login', templateVars);
 });
 
-// send user to regiester page
+// REGISTER 
 app.get('/register', (req, res) => {
-  const usernameCookie = req.cookies["username"];
-  const templateVars = {username: usernameCookie};
+  const userIdCookie = req.cookies["user_id"];
+  const userObject = userDatabase[userIdCookie];
+  const templateVars = { "userObject": userObject };
   res.render('urls_register', templateVars);
 });
 
 // HOMEPAGE 
-// send page with URL index
 app.get('/urls', (req, res) => {
-  const usernameCookie = req.cookies["username"];
-  const templateVars = { urls: urlDatabase, username: usernameCookie};
+  const userIdCookie = req.cookies["user_id"];
+  const userObject = userDatabase[userIdCookie];
+  const templateVars = {"urls": urlDatabase, "userObject": userObject};
   res.render('urls_index', templateVars);
 });
 
 // ADD NEW URL PAGE
 app.get('/urls/new', (req, res) => {
-  const usernameCookie = req.cookies["username"];
-  const templateVars = {username: usernameCookie};
+  const userIdCookie = req.cookies["user_id"];
+  const userObject = userDatabase[userIdCookie];
+  const templateVars = { "userObject": userObject };
   res.render("urls_new", templateVars);
 });
 
 
 // INDIVIDUAL URL DISPLAY PAGE
-// had edit form 
+// had edit url form 
 app.get('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
-  const usernameCookie = req.cookies["username"];
-  const templateVars = { shortURL: shortURL, longURL: longURL, username: usernameCookie};
+  const userIdCookie = req.cookies["user_id"];
+  const userObject = userDatabase[userIdCookie];
+  const templateVars = { shortURL: shortURL, longURL: longURL, "userObject": userObject };
   res.render("urls_show", templateVars);
 });
 
                 // ACTIONS //
 
-
+// ADD NEW URL
 // check if url exists in db already
 // ddd .com or http to input if not present already
 // generate new short id and store long URL.
@@ -158,13 +171,13 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${newKey}`);
 });
 
-// takes us to longURL page
+// GO TO LONGURL WEBSITE
 app.get('/urls/:shortURL', (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   return res.redirect(!returnURLWithHttp(longURL));
 });
 
-// edit an URL
+// EDIT EXISTING URL
 app.post('/urls/:id', (req, res) => {
   const shortURL = req.params.id;
   const inputURL = req.body.longURL;
@@ -173,7 +186,7 @@ app.post('/urls/:id', (req, res) => {
   res.redirect('/urls');
 });
 
-// delete an URL
+// DELETE URL
 app.post('/urls/:shortURL/delete', (req, res) => {
   let shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
@@ -186,6 +199,8 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 // localhost:8080/
 // localhost:8080/urls
 // localhost:8080/urls/new
+// localhost:8080/login
+// localhost:8080/register
 
 // <------------ Helper Functions --------------->
 
@@ -233,10 +248,6 @@ const doesUserExist = (email) => {
   return false;
 };
 
-const getIdWithEmail = (email) => {
-
-}
-
 const isPasswordCorrect = (email, password) => {
   let userArr = Object.keys(userDatabase);
   for (const userId of userArr) {
@@ -249,7 +260,7 @@ const isPasswordCorrect = (email, password) => {
 const addNewUser = (username, email, password, res) => {
   const id = generateRandomString(7);
   userDatabase[id] = {email: email, username: username, password: password};
-  res.cookie('username', username);
+  res.cookie('user_id', id);
   return id;
 }
 
@@ -257,13 +268,16 @@ const addNewUser = (username, email, password, res) => {
 // i.e gerUserInfo('name@domain.com', 'email', 'userid);
 // pass userid, email, username or password as data
 const getUserInfo = (inputData, inputDataType, outputData) => {
-  let userArr = Object.keys(userDatabase);
+let userArr = Object.keys(userDatabase);
+if (inputDataType === 'userid') {
+  return userDatabase[inputData][outputData];
+}
  for (let userId of userArr) {
     if (inputData === userDatabase[userId][inputDataType]) {
       if (outputData === 'userid') {
         return userId;
       } else {
-        return userDatabase[userId];
+        return userDatabase[userId][outputData];
       }
     }
   } 
@@ -283,13 +297,6 @@ const generateRandomString = (length) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
-// TODO - create register button 
-// TODO - create register page
-
-// TODO - figure out login. Does it wipe my quotes if I logout?
-// if user asks to access links and !username 
-// use req.cookies['username'] to verify if user is logged in
 
 // flash messages (npm package) - express flash messages 
 
