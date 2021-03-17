@@ -75,9 +75,10 @@ app.post('/login', (req, res) => {
   const password = req.body.password;
   if (doesUserExist(email)) {
     if (isPasswordCorrect(email, password)) {
-      //set cookie username 
-      let userNameStr = 
+      let userNameStr = getUserInfo(email, 'email', 'username');
+      console.log(userNameStr);
       res.cookie('username', userNameStr);
+      res.redirect('/urls');
     }
   }
 });
@@ -262,7 +263,7 @@ const getUserInfo = (inputData, inputDataType, outputData) => {
       if (outputData === 'userid') {
         return userId;
       } else {
-        return userDatabase[userID];
+        return userDatabase[userId];
       }
     }
   } 
