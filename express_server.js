@@ -4,6 +4,8 @@ const PORT = 8080;
 const morgan = require('morgan');
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
@@ -17,7 +19,11 @@ let error = '';
 
 const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "aJ48lW" },
-  "9sm5xK": { longURL: "http://www.google.com", userID: "aJ48lW" }
+  "9sm5xK": { longURL: "http://www.google.com", userID: "aJ48lW" },
+  "Fv84if": { longURL: "http://www.reddit.com", userID: "1D4G5v7" },
+  "BM7r4d": { longURL: "http://www.facebook.com", userID: "1D4G5v7" },
+  "MUaf43": { longURL: "http://www.twitter.co", userID: "5D7HGr1" },
+  "Bv5Htq": { longURL: "http://www.pinterest.com", userID: "5D7HGr1" }
 };
 
 const userDatabase = {
@@ -35,19 +41,19 @@ const userDatabase = {
     username: 'Johnny',
     email: 'john@hotmail.com',
     password: 'test1234'
-  }
+  } // add bcypt hash to hardcoded passwords 
 };
 
-//-------------- ROUTING --------------//
+//---------------- ROUTING ----------------//
         
           // LOGIN/REGISTRATION //
 
-// root directory 
+// ROOT //
 app.get('/', (req, res) => {
   res.send('I AM ROOT');
 });
 
-// USER REGISTRATION 
+// USER REGISTRATION //
 app.post('/register', (req, res) => {
   const email = req.body.email.toLowerCase();
   const username = req.body.username;
@@ -66,7 +72,7 @@ app.post('/register', (req, res) => {
   res.redirect('/urls');
 });
 
-// LOGIN FROM LOGIN
+// LOGIN FROM LOGIN //
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -81,7 +87,6 @@ app.post('/login', (req, res) => {
       res.status(401).send(error);
       return
     }
-    // NEED TO EXPAND TO LINK TO REGISTRY
   } else {
     error = "User doesn't exist"
       res.status(401).send(error);
@@ -89,25 +94,16 @@ app.post('/login', (req, res) => {
   }
 });
 
-// ** OLD LOGIN FROM HEADER **                              
-// user login 
-// sets cookie with username
-// app.post('/login', (req, res) => {
-//   const userNameStr = req.body["userName"];
-//   res.cookie('username', userNameStr);
-//   res.redirect('/urls');
-// });   
-
-// USER LOGOUT
+// USER LOGOUT //
 app.post('/logout', (req, res) => {
   console.log('logout function is firing')
   res.clearCookie('user_id');
-  res.redirect('/urls');
+  res.redirect('/login');
 });
+ 
+// --------------- MAIN PAGES ------------------- //
 
-// MAIN PAGES //
-
-// LOGIN
+// LOGIN //
 app.get('/login', (req, res) => {
   const userIdCookie = req.cookies["user_id"];
   const userObject = userDatabase[userIdCookie];
@@ -115,7 +111,7 @@ app.get('/login', (req, res) => {
   res.render('urls_login', templateVars);
 });
 
-// REGISTER 
+// REGISTER //
 app.get('/register', (req, res) => {
   const userIdCookie = req.cookies["user_id"];
   const userObject = userDatabase[userIdCookie];
@@ -125,12 +121,7 @@ app.get('/register', (req, res) => {
 
 // HOMEPAGE 
 app.get('/urls', (req, res) => {
-  console.log('yes')
   const userIdCookie = req.cookies["user_id"];
-  // if (!userIdCookie) {
-  //   res.redirect('/login');
-  //   return;
-  // }
   const userObject = userDatabase[userIdCookie];
   const templateVars = {"urls": urlDatabase, "userObject": userObject, "userID": userIdCookie};
   res.render('urls_index', templateVars);
@@ -159,7 +150,7 @@ app.get('/urls/:shortURL', (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-                // ACTIONS //
+//--------------------- ACTIONS ------------------------//
 
 // ADD NEW URL
 // check if url exists in db already
@@ -189,12 +180,14 @@ app.post('/urls/:id', (req, res) => {
   const shortURL = req.params.id;
   const inputURL = req.body.longURL;
   const longURL = addDotCom(returnURLWithHttp(inputURL));
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL].longURL = longURL;
   res.redirect('/urls');
 });
+// THIS IS DELETING THE ENTRIES - probably re-assigning them to nothing
 
 // DELETE URL
 app.post('/urls/:shortURL/delete', (req, res) => {
+  console.log("delete is firing")
   const userIdCookie = req.cookies["user_id"];
   if (!userIdCookie) {
     return;
@@ -260,6 +253,8 @@ const doesUserExist = (email) => {
 };
 
 const isPasswordCorrect = (email, password) => {
+  // use hash method here hashPass = bcrypt.hashSyc(password, saltRounds)
+  // use compareSync in comparison to 
   let userArr = Object.keys(userDatabase);
   for (const userId of userArr) {
     if (email === userDatabase[userId].email) {
@@ -270,13 +265,15 @@ const isPasswordCorrect = (email, password) => {
 
 const addNewUser = (username, email, password, res) => {
   const id = generateRandomString(7);
+  const hashPass = bcrypt.hashSyc(password, saltRounds);
+  console.log(hashPass)
   userDatabase[id] = {email: email, username: username, password: password};
   res.cookie('user_id', id);
   return id;
-}
+};
 
-// generates any user info with custimizable input type             
-// i.e gerUserInfo('name@domain.com', 'email', 'userid);
+// generates any user info with any user info available in our db            
+// i.e gerUserInfo('name@domain.com', 'email', 'userid');
 // pass userid, email, username or password as data
 const getUserInfo = (inputData, inputDataType, outputData) => {
 let userArr = Object.keys(userDatabase);
@@ -292,7 +289,7 @@ if (inputDataType === 'userid') {
       }
     }
   } 
-}
+};
 
 const generateRandomString = (length) => {
   const chars = '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -303,14 +300,31 @@ const generateRandomString = (length) => {
   return result;
 };
 
-// <------- Listening -------->
+                 //<------- Listening -------->//
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+//                            TODo
 // flash messages (npm package) - express flash messages 
 
 // Math.random().toString(36).substring(2,8) - shorter pw gen 
 
 // url -X POST -i localhost:8080/urls/9sm5xK/delete
+
+// create flag system for bad logins 
+
+// add better landing page 
+
+// get short link to send to actual website
+
+// style page with bootstrap
+
+// encrypt 
+
+// replace cookieParcer with cookieSession 
+// res.cookie ----> req.session['user_id'] = userid; 
+// req.cookie = req.session['user_id']
+// logout 
+// req.session['user_id'] = null; 
