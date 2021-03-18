@@ -8,35 +8,19 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-      </div>
+    </div>
       <% if (userObject) { %>
-        <div>
-          <form class="form-inline" action="/logout" method="POST">
-            <div style="padding: 10px; padding-right: 15px; color: white;">You are signed in as <%=userObject.username%>!</div>
-            <button type="submit" class="btn btn-warning">Logout</button>
-            </form>
-        </div>
+    <div>
+      <form class="form-inline" action="/logout" method="POST">
+        <div style="padding: 10px; padding-right: 15px; color: white;">You are signed in as <%=userObject.username%>!</div>
+        <button type="submit" class="btn btn-warning">Logout</button>
+      </form>
+    </div>
     <%  } else {  %>
-      <div class="navbar-nav">
-        <a class="nav-item nav-link" href="/login" >Login</a>
-        <a class="nav-item nav-link" href="/register">Register</a>
-      </div>
+    <div class="navbar-nav">
+      <a class="nav-item nav-link" href="/login" >Login</a>
+      <a class="nav-item nav-link" href="/register">Register</a>
+    </div>
       <% } %>
   </nav>
 </header>
-
-
-<!-- </div>
- if (username) { 
-<form class="form-inline" action="/logout" method="POST">
-  <div class="form-group mb-2">
-    <div style="padding: 10px; padding-right: 15px;">Now logged in as <username!</div>
-    <button type="submit" class="btn btn-primary">Logout</button>
- } else { 
-  <form class="form-inline" action="/login" method="POST">
-    <div class="form-group mb-2">
-      <label for="username">Login</label>
-      <input class="form-control" type="text" name="userName" placeholder="username" style="width: 150px; margin: 10px">
-      <button type="submit" class="btn btn-primary">Submit</button>
- } 
-  </div> -->

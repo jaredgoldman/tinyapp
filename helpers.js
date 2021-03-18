@@ -39,7 +39,7 @@ const doesURLExist = (urlDB, url, userid) => {
 const doesUserExist = (userDB, email) => {
   let userArr = Object.keys(userDB);
   for (const userId of userArr) {
-  const dbEmail = userDB[userId].email;
+    const dbEmail = userDB[userId].email;
     if (email === dbEmail) {
       return true;
     }
@@ -57,7 +57,7 @@ const isPasswordCorrect = (userDB, email, password) => {
   }
 };
 
-const addNewUser = (userDB, username, email, password, res) => {
+const addNewUser = (userDB, username, email, password, req) => {
   const id = generateRandomString(7);
   const hashPass = bcrypt.hashSync(password, saltRounds);
   userDB[id] = {email: email, username: username, password: hashPass};
@@ -65,26 +65,26 @@ const addNewUser = (userDB, username, email, password, res) => {
   return id;
 };
 
-// generates any user info with any user info available in our db            
+// generates any user info with any user info available in our db
 // i.e gerUserInfo('name@domain.com', 'email', 'userid');
 // pass userid, email, username or password as data
 const getUserInfo = (userDB, inputData, inputDataType, outputData) => {
-let userArr = Object.keys(userDB);
-if (inputDataType === 'userid') {
-  return userDB[inputData][outputData];
-}
- for (let userID of userArr) {
+  let userArr = Object.keys(userDB);
+  if (inputDataType === 'userid') {
+    return userDB[inputData][outputData];
+  }
+  for (let userID of userArr) {
     if (inputData === userDB[userID][inputDataType]) {
       if (outputData === 'userid') {
         return userID;
       }
       if (outputData === 'userprofile') {
-        return userDB[userID]
+        return userDB[userID];
       } else {
         return userDB[userID][outputData];
       }
     }
-  } 
+  }
 };
 
 const generateRandomString = (length) => {
@@ -96,4 +96,4 @@ const generateRandomString = (length) => {
   return result;
 };
 
-module.exports = { returnURLWithHttp, addDotCom, doesUserExist, isPasswordCorrect, addNewUser, getUserInfo, doesURLExist, generateRandomString }
+module.exports = { returnURLWithHttp, addDotCom, doesUserExist, isPasswordCorrect, addNewUser, getUserInfo, doesURLExist, generateRandomString };

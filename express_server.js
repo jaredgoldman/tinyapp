@@ -3,11 +3,10 @@ const app = express();
 const PORT = 8080;
 const morgan = require('morgan');
 const bodyParser = require("body-parser");
-const cookieSession = require('cookie-session')
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
-const { returnURLWithHttp, addDotCom, doesUserExist, doesURLExist, 
-  isPasswordCorrect, addNewUser, getUserInfo, generateRandomString } = require('./helpers')
+const { returnURLWithHttp, addDotCom, doesUserExist, doesURLExist, isPasswordCorrect, addNewUser, getUserInfo, generateRandomString } = require('./helpers');
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(morgan('short'));
@@ -15,9 +14,8 @@ app.use(morgan('short'));
 app.use(cookieSession({
   name: 'session',
   keys: ['user_id'],
-  // Cookie Options
-  maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}))
+  maxAge: 24 * 60 * 60 * 1000 
+}));
 
 app.set('view engine', 'ejs');
 
@@ -51,12 +49,12 @@ const userDatabase = {
     username: 'Johnny',
     email: 'john@hotmail.com',
     password: bcrypt.hashSync('test1234', saltRounds)
-  } 
+  }
 };
 
 //---------------- ROUTING ----------------//
         
-          // LOGIN/REGISTRATION //
+            // LOGIN/REGISTRATION //
 
 // ROOT //
 app.get('/', (req, res) => {
@@ -71,14 +69,14 @@ app.post('/register', (req, res) => {
   if (doesUserExist(userDatabase, email)) {
     error = "Error: User already exists";
     res.status(401).send(error);
-    return;          
+    return;
   }
   if (email === "" || password === "") {
     error = "Email/Password must be entered";
     res.status(400).send(error);
     return;
   }
-  addNewUser(userDatabase, username, email, password, res);
+  addNewUser(userDatabase, username, email, password, req);
   res.redirect('/urls');
 });
 
@@ -90,18 +88,18 @@ app.post('/login', (req, res) => {
     if (isPasswordCorrect(userDatabase, email, password)) {
       let userID = getUserInfo(userDatabase, email, 'email', 'userid');
       req.session['user_id'] = userID;
-      console.log(req.session)
+      console.log(req.session);
       res.redirect('/urls');
       return;
     } else {
-      error = "Password/username is incorrect"
+      error = "Password/username is incorrect";
       res.status(401).send(error);
-      return
+      return;
     }
   } else {
-    error = "User doesn't exist"
+    error = "User doesn't exist";
     res.status(401).send(error);
-    return
+    return;
   }
 });
 
@@ -111,7 +109,7 @@ app.post('/logout', (req, res) => {
   res.redirect('/login');
 });
  
-// --------------- MAIN PAGES ------------------- //
+                  // MAIN PAGES //
 
 // LOGIN //
 app.get('/login', (req, res) => {
@@ -129,16 +127,16 @@ app.get('/register', (req, res) => {
   res.render('urls_register', templateVars);
 });
 
-// HOMEPAGE 
+// HOMEPAGE //
 app.get('/urls', (req, res) => {
   const userIdCookie = req.session.user_id;
-  console.log(userIdCookie)
+  console.log(userIdCookie);
   const userObject = userDatabase[userIdCookie];
   const templateVars = {"urls": urlDatabase, "userObject": userObject, "userID": userIdCookie};
   res.render('urls_index', templateVars);
 });
 
-// ADD NEW URL PAGE
+// ADD NEW URL PAGE //
 app.get('/urls/new', (req, res) => {
   const userIdCookie = req.session.user_id;
   if (!userIdCookie) {
@@ -151,11 +149,11 @@ app.get('/urls/new', (req, res) => {
 });
 
 
-// INDIVIDUAL URL DISPLAY PAGE
+// INDIVIDUAL URL DISPLAY PAGE //
 app.get('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
   if (!urlDatabase[shortURL]) {
-    error = "URL doesn't exist"
+    error = "URL doesn't exist";
     res.status(401).send(error);
     return;
   }
@@ -166,14 +164,14 @@ app.get('/urls/:shortURL', (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-//--------------------- ACTIONS ------------------------//
+                           // ACTIONS //
 
-// SEE USER DB
+// SEE USER DB //
 app.get('/users', (req, res) => {
   res.json(userDatabase);
 });
 
-// ADD NEW URL
+// ADD NEW URL //
 app.post("/urls", (req, res) => {
   const userIdCookie = req.session.user_id;
   if (!userIdCookie) {
@@ -189,6 +187,7 @@ app.post("/urls", (req, res) => {
     res.status(401).send(error);
     return;
   }
+  // if user is logged in and URL doesn't exist, proceed with creating new URL
   const newKey = generateRandomString(6);
   urlDatabase[newKey] = {};
   urlDatabase[newKey].longURL = httpURL;
@@ -196,7 +195,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${newKey}`);
 });
 
-// GO TO LONGURL WEBSITE
+// GO TO LONGURL WEBSITE //
 app.get('/u/:shortURL', (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   return res.redirect(!returnURLWithHttp(longURL));
@@ -206,7 +205,7 @@ app.get('/u/:shortURL', (req, res) => {
 app.post('/urls/:id', (req, res) => {
   const userIdCookie = req.session.user_id;
   if (!userIdCookie) {
-    error = 'You must be logged in to edit URLS';
+    error = 'You must be logged in to edit URLs';
     res.status(401).send(error);
     return;
   }
@@ -221,7 +220,7 @@ app.post('/urls/:id', (req, res) => {
 app.post('/urls/:shortURL/delete', (req, res) => {
   const userIdCookie = req.session.user_id;
   if (!userIdCookie) {
-    error = 'You cannot delete another users URL';
+    error = 'You cannot delete URLs when logged out';
     res.status(401).send(error);
     return;
   }
@@ -236,21 +235,17 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   res.redirect('/urls');
 });
 
-                 //<------- Listening -------->//
+//<------- Listening -------->//
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
 //                            TODO
-// flash messages (npm package) - express flash messages 
+// flash messages (npm package) - express flash messages
 
-// Math.random().toString(36).substring(2,8) - shorter pw gen 
+// Math.random().toString(36).substring(2,8) - shorter pw gen
 
-// CREATE MIDDLEWARE TO SEND USEROBJECT // 
-
-// 1. CORE WORK
-// 3. STYLE PAGE
 // 4. LANDING PAGE
 // 5. ERROR PAGE
 // 6. ERROR FLAGS (if there is time)
