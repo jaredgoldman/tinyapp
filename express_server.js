@@ -16,8 +16,8 @@ let error = '';
 //-------------- DATA --------------//
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "aJ48lW" },
+  "9sm5xK": { longURL: "http://www.google.com", userID: "aJ48lW" }
 };
 
 const userDatabase = {
@@ -26,9 +26,9 @@ const userDatabase = {
     email: 'jim@bobby.com',
     password: 'test1234'
   },
-  "4D6BnlE": {
+  "aJ48lW": {
     username: 'jennifer',
-    email: 'jenn@bgmail.com',
+    email: 'jenn@gmail.com',
     password: 'test1234'
   },
   "5D7HGr1": {
@@ -55,7 +55,7 @@ app.post('/register', (req, res) => {
   if (doesUserExist(email)) {
     error = "Error: User already exists";
     res.status(401).send(error);
-    return;
+    return;          
   }
   if (email === "" || password === "") {
     error = "Email/Password must be entered";
@@ -89,14 +89,14 @@ app.post('/login', (req, res) => {
   }
 });
 
-// ** OLD LOGIN FROM HEADER **
+// ** OLD LOGIN FROM HEADER **                              
 // user login 
 // sets cookie with username
 // app.post('/login', (req, res) => {
 //   const userNameStr = req.body["userName"];
 //   res.cookie('username', userNameStr);
 //   res.redirect('/urls');
-// });
+// });   
 
 // USER LOGOUT
 app.post('/logout', (req, res) => {
@@ -127,8 +127,12 @@ app.get('/register', (req, res) => {
 // HOMEPAGE 
 app.get('/urls', (req, res) => {
   const userIdCookie = req.cookies["user_id"];
+  if (!userIdCookie) {
+    res.redirect('/login');
+    return;
+  }
   const userObject = userDatabase[userIdCookie];
-  const templateVars = {"urls": urlDatabase, "userObject": userObject};
+  const templateVars = {"urls": urlDatabase, "userObject": userObject, "userID": userIdCookie};
   res.render('urls_index', templateVars);
 });
 
@@ -149,7 +153,7 @@ app.get('/urls/new', (req, res) => {
 // had edit url form 
 app.get('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];
+  const longURL = urlDatabase[shortURL].longURL;
   const userIdCookie = req.cookies["user_id"];
   const userObject = userDatabase[userIdCookie];
   const templateVars = { shortURL: shortURL, longURL: longURL, "userObject": userObject };
