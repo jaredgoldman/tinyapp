@@ -87,7 +87,7 @@ app.post('/login', (req, res) => {
   if (doesUserExist(userDatabase, email)) {
     if (isPasswordCorrect(userDatabase, email, password)) {
       let userID = getUserInfo(userDatabase, email, 'email', 'userid');
-      req.session['user_id'] = userID;
+      req.session.user_id = userID;
       console.log(req.session);
       res.redirect('/urls');
       return;
