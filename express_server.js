@@ -241,17 +241,3 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-//                            TODO
-// flash messages (npm package) - express flash messages
-
-// Math.random().toString(36).substring(2,8) - shorter pw gen
-
-// 4. LANDING PAGE
-// 5. ERROR PAGE
-// 6. ERROR FLAGS (if there is time)
-
-// localhost:8080/urls/b2xVn2/delete
-
-// (Stretch) the date the short URL was created
-// (Stretch) the number of times the short URL was visited
-// (Stretch) the number number of unique visits for the short URL

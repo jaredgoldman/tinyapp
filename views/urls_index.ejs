@@ -27,7 +27,6 @@
       <tbody>
         <% for(let url in urls) { %>
           <% if (urls[url].userID === userID) { %>
-          <!-- a conditional to check if our current users ID  -->
           <tr>
             <td><%= url %></td>
             <td><a href="<%=urls[url].longURL%>"><%=urls[url].longURL%></a></td>
