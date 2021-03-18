@@ -12,7 +12,7 @@
   <%- include('../partials/_header') %>
 </header>
 <body>
-  <% if (userObj) { %>
+  <% if (userObject) { %>
   <main style="margin: 1em;">
     <h3>My URLs</h3>
     <table class="table">
@@ -26,27 +26,29 @@
       </thead>
       <tbody>
         <% for(let url in urls) { %>
-          <% if(urls[url].userID === userID) { %>
+          <% console.log(url) %>
+          <% if (urls[url].userID === userID) { %>
           <!-- a conditional to check if our current users ID  -->
           <tr>
             <td><%= url %></td>
             <td><a href="<%=urls[url].longURL%>"><%=urls[url].longURL%></a></td>
             <td>
-              <form class="form-inline" method="GET" action="/urls/<%= url %>">
+              <form class="form-inline" method="GET" action="/urls/<%=url%>">
                 <button type="submit" class="btn btn-primary">Edit</button>
               </form>
             </td>
             <td>
-              <form class="form-inline" method="POST" action="/urls/<%= url %>/delete">
+              <form class="form-inline" method="POST" action="/urls/<%=url%>/delete">
                 <button type="submit" class="btn btn-primary">Delete</button>
               </form>
             </td>
           </tr>
           <% } %>
-        <% } %>
-      </tbody>
-    </table>
+          <% } %>
+        </tbody>
+      </table>
   <% } else {  %>
+    <h3 style="margin: 10px">Please login to see URLs</h3>
   <% } %>
   </main>
   <!-- Bootstrap JS -->

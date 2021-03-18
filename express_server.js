@@ -100,6 +100,7 @@ app.post('/login', (req, res) => {
 
 // USER LOGOUT
 app.post('/logout', (req, res) => {
+  console.log('logout function is firing')
   res.clearCookie('user_id');
   res.redirect('/urls');
 });
@@ -107,8 +108,6 @@ app.post('/logout', (req, res) => {
 // MAIN PAGES //
 
 // LOGIN
-// currently, we are logging out automatically when we go to the login page//
-// 
 app.get('/login', (req, res) => {
   const userIdCookie = req.cookies["user_id"];
   const userObject = userDatabase[userIdCookie];
@@ -126,11 +125,12 @@ app.get('/register', (req, res) => {
 
 // HOMEPAGE 
 app.get('/urls', (req, res) => {
+  console.log('yes')
   const userIdCookie = req.cookies["user_id"];
-  if (!userIdCookie) {
-    res.redirect('/login');
-    return;
-  }
+  // if (!userIdCookie) {
+  //   res.redirect('/login');
+  //   return;
+  // }
   const userObject = userDatabase[userIdCookie];
   const templateVars = {"urls": urlDatabase, "userObject": userObject, "userID": userIdCookie};
   res.render('urls_index', templateVars);
@@ -150,7 +150,6 @@ app.get('/urls/new', (req, res) => {
 
 
 // INDIVIDUAL URL DISPLAY PAGE
-// had edit url form 
 app.get('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
@@ -196,6 +195,10 @@ app.post('/urls/:id', (req, res) => {
 
 // DELETE URL
 app.post('/urls/:shortURL/delete', (req, res) => {
+  const userIdCookie = req.cookies["user_id"];
+  if (!userIdCookie) {
+    return;
+  }
   let shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect('/urls');
@@ -309,3 +312,5 @@ app.listen(PORT, () => {
 // flash messages (npm package) - express flash messages 
 
 // Math.random().toString(36).substring(2,8) - shorter pw gen 
+
+// url -X POST -i localhost:8080/urls/9sm5xK/delete
