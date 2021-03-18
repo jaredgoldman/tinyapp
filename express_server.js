@@ -11,6 +11,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 app.use(morgan('short'));
 
+// app.use(middleware)
+
 app.set('view engine', 'ejs');
 
 let error = '';
@@ -30,17 +32,19 @@ const userDatabase = {
   "1D4G5v7": {
     username: 'jimmybobby',
     email: 'jim@bobby.com',
-    password: 'test1234'
+    password: bcrypt.hashSync('test1234', saltRounds)
   },
+
   "aJ48lW": {
     username: 'jennifer',
     email: 'jenn@gmail.com',
-    password: 'test1234'
+    password: bcrypt.hashSync('test1234', saltRounds)
   },
+
   "5D7HGr1": {
     username: 'Johnny',
     email: 'john@hotmail.com',
-    password: 'test1234'
+    password: bcrypt.hashSync('test1234', saltRounds)
   } // add bcypt hash to hardcoded passwords 
 };
 
@@ -152,6 +156,11 @@ app.get('/urls/:shortURL', (req, res) => {
 
 //--------------------- ACTIONS ------------------------//
 
+// SEE USER DB
+app.get('/users', (req, res) => {
+  res.json(userDatabase);
+});
+
 // ADD NEW URL
 // check if url exists in db already
 // ddd .com or http to input if not present already
@@ -253,21 +262,19 @@ const doesUserExist = (email) => {
 };
 
 const isPasswordCorrect = (email, password) => {
-  // use hash method here hashPass = bcrypt.hashSyc(password, saltRounds)
-  // use compareSync in comparison to 
   let userArr = Object.keys(userDatabase);
   for (const userId of userArr) {
+    let dbPassword = userDatabase[userId].password;
     if (email === userDatabase[userId].email) {
-      return (password === userDatabase[userId].password);
+      return bcrypt.compareSync(password, dbPassword);
     }
   }
 };
 
 const addNewUser = (username, email, password, res) => {
   const id = generateRandomString(7);
-  const hashPass = bcrypt.hashSyc(password, saltRounds);
-  console.log(hashPass)
-  userDatabase[id] = {email: email, username: username, password: password};
+  const hashPass = bcrypt.hashSync(password, saltRounds);
+  userDatabase[id] = {email: email, username: username, password: hashPass};
   res.cookie('user_id', id);
   return id;
 };
@@ -311,20 +318,32 @@ app.listen(PORT, () => {
 
 // Math.random().toString(36).substring(2,8) - shorter pw gen 
 
-// url -X POST -i localhost:8080/urls/9sm5xK/delete
-
 // create flag system for bad logins 
 
 // add better landing page 
 
 // get short link to send to actual website
 
-// style page with bootstrap
+// style page with bootstrap 
 
-// encrypt 
+// CREATE MIDDLEWARE TO SEND USEROBJECT // 
+// 
+
+// FOLLOW REST CONVENTION // 
+
+// HASH PASSWORDS //
+
+// ENCRYPT PASSWORDS //
 
 // replace cookieParcer with cookieSession 
 // res.cookie ----> req.session['user_id'] = userid; 
 // req.cookie = req.session['user_id']
 // logout 
 // req.session['user_id'] = null; 
+
+// 1. CORE WORK
+// 2. MAKE SHORT URL LINK
+// 3. STYLE PAGE
+// 4. LANDING PAGE
+// 5. ERROR PAGE
+// 6. ERROR FLAGS (if there is time)
