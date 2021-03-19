@@ -19,6 +19,8 @@ app.use(cookieSession({
 
 app.set('view engine', 'ejs');
 
+// Library of errors that are passed via a redirect URL param
+// Key is then used to access this object and populate an error page via templateVars
 const errors = {
   userexists: "User already exists",
   empwmiss: "Email and password must be enetered",
@@ -227,7 +229,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${newKey}`);
 });
 
-// GO TO LONGURL WEBSITE //
+// REDIRCT TO LONGURL WEBSITE //
 app.get('/u/:shortURL', (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
   return res.redirect(returnURLWithHttp(longURL));
