@@ -229,7 +229,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${newKey}`);
 });
 
-// REDIRCT TO LONGURL WEBSITE //
+// REDIRECT TO LONGURL WEBSITE //
 app.get('/u/:shortURL', (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
   return res.redirect(returnURLWithHttp(longURL));
