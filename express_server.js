@@ -19,16 +19,19 @@ app.use(cookieSession({
 
 app.set('view engine', 'ejs');
 
-// 
-
 const errors = {
   userexists: "User already exists",
   empwmiss: "Email and password must be enetered",
   pwunin: "Password/username is incorrect",
   nouser: "No record of that user exists",
-  logadd: "You must be logged in to add new URLS",
+  logadd: "You must be logged in to add new URLs",
+  logview: "You must be logged in to view this URL",
   nourl: "URL does not exist",
   oldurl: "This URL is has already been shortened",
+  loggedin: "You are already logged in",
+  logreg: "Please log out to register a new account",
+  alogout: "You are already logged out",
+  logdel: "You must be logged in to delete this URL"
 };
 
 //-------------- DATA --------------//
@@ -68,7 +71,12 @@ const userDatabase = {
 
 // ROOT //
 app.get('/', (req, res) => {
-  res.send('I AM ROOT');
+  const userIdCookie = req.session.user_id;
+  if (userIdCookie) {
+    res.redirect('/urls');
+    return;
+  }
+  res.redirect('/login');
 });
 
 // USER REGISTRATION //
@@ -96,7 +104,6 @@ app.post('/login', (req, res) => {
     if (isPasswordCorrect(userDatabase, email, password)) {
       let userID = getUserInfo(userDatabase, email, 'email', 'userid');
       req.session.user_id = userID;
-      console.log(req.session);
       res.redirect('/urls');
       return;
     } else {
@@ -122,6 +129,10 @@ app.post('/logout', (req, res) => {
 // LOGIN //
 app.get('/login', (req, res) => {
   const userIdCookie = req.session.user_id;
+  if (userIdCookie) {
+    res.redirect('/error/loggedin');
+    return;
+  }
   const userObject = userDatabase[userIdCookie];
   const templateVars = { "userObject": userObject };
   res.render('urls_login', templateVars);
@@ -130,6 +141,10 @@ app.get('/login', (req, res) => {
 // REGISTER //
 app.get('/register', (req, res) => {
   const userIdCookie = req.session.user_id;
+  if (userIdCookie) {
+    res.redirect('/error/logreg');
+    return;
+  }
   const userObject = userDatabase[userIdCookie];
   const templateVars = { "userObject": userObject };
   res.render('urls_register', templateVars);
@@ -158,13 +173,17 @@ app.get('/urls/new', (req, res) => {
 
 // INDIVIDUAL URL DISPLAY PAGE //
 app.get('/urls/:shortURL', (req, res) => {
+  const userIdCookie = req.session.user_id;
+  if (!userIdCookie) {
+    res.redirect('/error/logview');
+    return;
+  }
   const shortURL = req.params.shortURL;
   if (!urlDatabase[shortURL]) {
     res.redirect('/error/nourl')
     return;
   }
   const longURL = urlDatabase[shortURL].longURL;
-  const userIdCookie = req.session.user_id;
   const userObject = userDatabase[userIdCookie];
   const templateVars = { shortURL: shortURL, longURL: longURL, "userObject": userObject };
   res.render("urls_show", templateVars);
@@ -197,6 +216,7 @@ app.post("/urls", (req, res) => {
   const httpURL = addDotCom(returnURLWithHttp(inputUrl));
   const userid = req.session.user_id;
   if (doesURLExist(urlDatabase, httpURL, userid)) {
+    res.redirect('error/oldurl');
     return;
   }
   // if user is logged in and URL doesn't exist, proceed with creating new URL
@@ -209,8 +229,8 @@ app.post("/urls", (req, res) => {
 
 // GO TO LONGURL WEBSITE //
 app.get('/u/:shortURL', (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  return res.redirect(!returnURLWithHttp(longURL));
+  const longURL = urlDatabase[req.params.shortURL].longURL;
+  return res.redirect(returnURLWithHttp(longURL));
 });
 
 // EDIT EXISTING URL
@@ -230,18 +250,15 @@ app.post('/urls/:id', (req, res) => {
 app.post('/urls/:shortURL/delete', (req, res) => {
   const userIdCookie = req.session.user_id;
   if (!userIdCookie) {
-    error = 'You cannot delete URLs when logged out';
     res.redirect('/error/logdel')
     return;
   }
   let shortURL = req.params.shortURL;
   if (!urlDatabase[shortURL].userID === userIdCookie) {
-    error = 'You cannot delete another users URL';
-    res.redirect('/error/logdel/')
+    res.redirect('/error/logdel')
     return;
   }
   delete urlDatabase[shortURL];
-  console.log(urlDatabase);
   res.redirect('/urls');
 });
 
