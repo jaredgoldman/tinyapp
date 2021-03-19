@@ -19,7 +19,17 @@ app.use(cookieSession({
 
 app.set('view engine', 'ejs');
 
-let error = '';
+// 
+
+const errors = {
+  userexists: "User already exists",
+  empwmiss: "Email and password must be enetered",
+  pwunin: "Password/username is incorrect",
+  nouser: "No record of that user exists",
+  logadd: "You must be logged in to add new URLS",
+  nourl: "URL does not exist",
+  oldurl: "This URL is has already been shortened",
+};
 
 //-------------- DATA --------------//
 
@@ -67,13 +77,11 @@ app.post('/register', (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
   if (doesUserExist(userDatabase, email)) {
-    error = "Error: User already exists";
-    res.status(401).send(error);
+    res.redirect('/error/userexists');
     return;
   }
   if (email === "" || password === "") {
-    error = "Email/Password must be entered";
-    res.status(400).send(error);
+    res.redirect('/error/empwmiss');
     return;
   }
   addNewUser(userDatabase, username, email, password, req);
@@ -93,12 +101,12 @@ app.post('/login', (req, res) => {
       return;
     } else {
       error = "Password/username is incorrect";
-      res.status(401).send(error);
+      res.redirect('/error/pwunin')
       return;
     }
   } else {
     error = "User doesn't exist";
-    res.status(401).send(error);
+    res.redirect('/error/nouser')
     return;
   }
 });
@@ -130,7 +138,6 @@ app.get('/register', (req, res) => {
 // HOMEPAGE //
 app.get('/urls', (req, res) => {
   const userIdCookie = req.session.user_id;
-  console.log(userIdCookie);
   const userObject = userDatabase[userIdCookie];
   const templateVars = {"urls": urlDatabase, "userObject": userObject, "userID": userIdCookie};
   res.render('urls_index', templateVars);
@@ -140,7 +147,7 @@ app.get('/urls', (req, res) => {
 app.get('/urls/new', (req, res) => {
   const userIdCookie = req.session.user_id;
   if (!userIdCookie) {
-    res.redirect('/login');
+    res.redirect('/error/logadd');
     return;
   }
   const userObject = userDatabase[userIdCookie];
@@ -153,8 +160,7 @@ app.get('/urls/new', (req, res) => {
 app.get('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
   if (!urlDatabase[shortURL]) {
-    error = "URL doesn't exist";
-    res.status(401).send(error);
+    res.redirect('/error/nourl')
     return;
   }
   const longURL = urlDatabase[shortURL].longURL;
@@ -162,6 +168,16 @@ app.get('/urls/:shortURL', (req, res) => {
   const userObject = userDatabase[userIdCookie];
   const templateVars = { shortURL: shortURL, longURL: longURL, "userObject": userObject };
   res.render("urls_show", templateVars);
+});
+
+// ERROR PAGE
+app.get('/error/:errormsg', (req, res) => {
+  const errorId = req.params.errormsg;
+  const errorMsg = errors[errorId];
+  const userIdCookie = req.session.user_id;
+  const userObject = userDatabase[userIdCookie];
+  const templateVars = { "userObject": userObject, "errorMsg": errorMsg }
+  res.render('urls_error', templateVars);
 });
 
                            // ACTIONS //
@@ -175,16 +191,12 @@ app.get('/users', (req, res) => {
 app.post("/urls", (req, res) => {
   const userIdCookie = req.session.user_id;
   if (!userIdCookie) {
-    error = 'You must be logged in to add new URLS';
-    res.status(401).send(error);
     return;
   }
   const inputUrl = req.body.longURL;
   const httpURL = addDotCom(returnURLWithHttp(inputUrl));
   const userid = req.session.user_id;
   if (doesURLExist(urlDatabase, httpURL, userid)) {
-    error = 'This URL is already stored';
-    res.status(401).send(error);
     return;
   }
   // if user is logged in and URL doesn't exist, proceed with creating new URL
@@ -205,8 +217,6 @@ app.get('/u/:shortURL', (req, res) => {
 app.post('/urls/:id', (req, res) => {
   const userIdCookie = req.session.user_id;
   if (!userIdCookie) {
-    error = 'You must be logged in to edit URLs';
-    res.status(401).send(error);
     return;
   }
   const shortURL = req.params.id;
@@ -221,13 +231,13 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   const userIdCookie = req.session.user_id;
   if (!userIdCookie) {
     error = 'You cannot delete URLs when logged out';
-    res.status(401).send(error);
+    res.redirect('/error/logdel')
     return;
   }
   let shortURL = req.params.shortURL;
   if (!urlDatabase[shortURL].userID === userIdCookie) {
     error = 'You cannot delete another users URL';
-    res.status(401).send(error);
+    res.redirect('/error/logdel/')
     return;
   }
   delete urlDatabase[shortURL];
